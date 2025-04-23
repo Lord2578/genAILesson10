@@ -11,7 +11,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 
 class FacebookPropertyScraper:
-    def __init__(self, target_url, output_filename="real_estate_data.jsonl"):
+    def __init__(self, target_url, output_filename="facebook_posts.jsonl"):
         """Ініціалізація скрапера для сторінки нерухомості"""
         self.target_url = target_url
         self.output_filename = output_filename
@@ -51,7 +51,7 @@ class FacebookPropertyScraper:
         except (TimeoutException, Exception) as e:
             print(f"ℹ️ Діалогове вікно не виявлено або не вдалося закрити: {str(e)}")
     
-    def load_more_content(self, scroll_count=4):
+    def load_more_content(self, scroll_count=6):
         """Прокрутка сторінки для завантаження додаткового контенту"""
         print(f"Завантаження додаткового контенту ({scroll_count} прокруток)...")
         
@@ -62,7 +62,7 @@ class FacebookPropertyScraper:
             print(f"Прокрутка {i+1}/{scroll_count}...")
             time.sleep(2.5)  # Пауза між прокрутками
     
-    def extract_property_posts(self, max_posts=7):
+    def extract_property_posts(self, max_posts=15):
         """Витягування даних з постів про нерухомість"""
         print("Пошук постів на сторінці...")
         
@@ -95,11 +95,9 @@ class FacebookPropertyScraper:
             print(f"Обробка поста {idx+1}/{len(post_elements)}...")
             
             post_info = {
-                "id": idx + 1,
-                "url": "Не знайдено",
-                "text": "Не знайдено",
-                "published_date": "Не знайдено",
-                "scraped_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "post_url": "URL not found",
+                "content": "No content found",
+                "date": "Date not found"
             }
             
             # Витягування URL поста
@@ -110,7 +108,7 @@ class FacebookPropertyScraper:
                     href = link.get_attribute('href')
                     if href and ('/posts/' in href or '/photos/' in href):
                         # Видалення параметрів URL
-                        post_info["url"] = href.split('?')[0]
+                        post_info["post_url"] = href.split('?')[0]
                         break
             except Exception as e:
                 print(f"  Помилка при отриманні URL: {str(e)}")
@@ -127,7 +125,7 @@ class FacebookPropertyScraper:
                 for selector in text_selectors:
                     text_elements = post.find_elements(By.XPATH, selector)
                     if text_elements:
-                        post_info["text"] = text_elements[0].text.strip()
+                        post_info["content"] = text_elements[0].text.strip()
                         break
             except Exception as e:
                 print(f"  Помилка при отриманні тексту: {str(e)}")
@@ -144,15 +142,15 @@ class FacebookPropertyScraper:
                 for selector in date_selectors:
                     date_elements = post.find_elements(By.XPATH, selector)
                     if date_elements:
-                        post_info["published_date"] = date_elements[0].text.strip()
+                        post_info["date"] = date_elements[0].text.strip()
                         break
             except Exception as e:
                 print(f"  Помилка при отриманні дати: {str(e)}")
             
             # Додаємо дані поста до списку, якщо є URL або текст
-            if post_info["url"] != "Не знайдено" or post_info["text"] != "Не знайдено":
+            if post_info["post_url"] != "URL not found" or post_info["content"] != "No content found":
                 property_data.append(post_info)
-                print(f"  ✅ Дані поста додано: {post_info['text'][:30]}...")
+                print(f"  ✅ Дані поста додано: {post_info['content'][:30]}...")
         
         return property_data
     
@@ -173,7 +171,7 @@ class FacebookPropertyScraper:
         except Exception as e:
             print(f"❗ Помилка при збереженні даних: {str(e)}")
     
-    def run(self, max_posts=7):
+    def run(self, max_posts=15):
         """Запуск процесу скрапінгу"""
         try:
             print(f"🚀 Початок скрапінгу: {self.target_url}")
@@ -208,9 +206,11 @@ class FacebookPropertyScraper:
 if __name__ == "__main__":
     # Налаштування та запуск скрапера
     TARGET_PAGE = "https://www.facebook.com/providentrealestateuz"
-    OUTPUT_FILE = "property_listings.jsonl"
-    MAX_POSTS = 7
+    OUTPUT_FILE = "facebook_posts.jsonl"
+    MAX_POSTS = 15
     
     # Створення та запуск скрапера
     scraper = FacebookPropertyScraper(TARGET_PAGE, OUTPUT_FILE)
+    
+    # Запуск скрапінгу
     scraper.run(MAX_POSTS)
